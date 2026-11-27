@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>دفتر کارهای احسان</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div>
+    <h1>دفتر کارهای احسان</h1>
+    <p class="sub">کار، اولویت، مهلت شمسی، شخص مربوط، پیشرفت، یادآور و تکرار — هر صبح در بریفینگ خوانده می‌شود.</p>
+  </div>
+  <div class="counts" id="counts"></div>
+</header>
+
+<div id="toast" aria-live="polite"></div>
+<div id="status"></div>
+
+<div id="addzone">
+  <div class="toolrow">
+    <button type="button" class="chip" id="addtoggle" aria-expanded="false" aria-controls="addpanel">＋ کار تازه</button>
+    <button type="button" class="chip" id="btn-dash" aria-expanded="false" aria-controls="dashpanel">⚙ تنظیمات داشبورد</button>
+    <button type="button" class="chip owned" id="btn-cats" aria-expanded="false" aria-controls="catspanel">⚙ ویرایش دسته‌ها</button>
+    <button type="button" class="chip owned" id="btn-access" aria-expanded="false" aria-controls="accesspanel">🔐 ویرایش دسترسی‌ها</button>
+    <button type="button" class="chip" id="btn-help" aria-expanded="false" aria-controls="helppanel">؟ راهنما</button>
+  </div>
+  <div class="addbar" id="addpanel" hidden>
+    <form id="addform">
+      <div class="row">
+        <div class="grow"><input type="text" id="f-title" placeholder="کار تازه…" autocomplete="off" aria-label="عنوان کار"></div>
+        <select id="f-area" class="w150" aria-label="حوزه"></select>
+        <select id="f-sub" class="w150" aria-label="زیردسته"></select>
+      </div>
+      <div class="row">
+        <select id="f-prio" class="w120" aria-label="اولویت">
+          <option value="بالا">اولویت بالا</option>
+          <option value="متوسط" selected>اولویت متوسط</option>
+          <option value="پایین">اولویت پایین</option>
+        </select>
+        <select id="f-size" class="w120" aria-label="حجم کار">
+          <option value="خیلی کم">حجم خیلی کم</option>
+          <option value="کم">حجم کم</option>
+          <option value="متوسط" selected>حجم متوسط</option>
+          <option value="زیاد">حجم زیاد</option>
+          <option value="خیلی زیاد">حجم خیلی زیاد</option>
+        </select>
+        <div class="w150"><input type="text" id="f-person" list="people-list" placeholder="شخص مربوط" autocomplete="off" aria-label="شخص مربوط"></div>
+        <div class="w150"><input type="text" id="f-project" list="project-list" placeholder="پروژه" autocomplete="off" aria-label="پروژه"></div>
+        <div class="w150" id="f-due-slot"></div>
+        <select id="f-remind" class="w150" aria-label="یادآور"></select>
+        <select id="f-repeat" class="w150" aria-label="تکرار"></select>
+      </div>
+      <div class="row">
+        <select id="f-prog" class="w150" aria-label="مرحله">
+          <option value="شروع‌نشده" selected>شروع‌نشده</option>
+          <option value="در حال انجام">در حال انجام</option>
+          <option value="منتظر بررسی">منتظر بررسی</option>
+          <option value="تأیید">تأیید</option>
+          <option value="انجام‌شده">انجام‌شده</option>
+        </select>
+        <select id="f-pct" class="w120" aria-label="درصد پیشرفت">
+          <option value="0" selected>۰٪</option>
+          <option value="10">۱۰٪</option>
+          <option value="20">۲۰٪</option>
+          <option value="30">۳۰٪</option>
+          <option value="40">۴۰٪</option>
+          <option value="50">۵۰٪</option>
+          <option value="60">۶۰٪</option>
+          <option value="70">۷۰٪</option>
+          <option value="80">۸۰٪</option>
+          <option value="90">۹۰٪</option>
+          <option value="100">۱۰۰٪</option>
+        </select>
+      </div>
+      <div class="row">
+        <div class="grow"><textarea id="f-note" rows="2" placeholder="توضیحات…" autocomplete="off" aria-label="توضیحات"></textarea></div>
+      </div>
+      <div class="row">
+        <button class="primary" type="submit">افزودن</button>
+        <button type="button" id="addclose">بستن</button>
+        <span class="spacer"></span>
+      </div>
+    </form>
+    <datalist id="people-list"></datalist>
+<datalist id="project-list"></datalist>
+  </div>
+</div>
+
+<div class="layout">
+<div class="maincol">
+<section id="reminders"></section>
+
+<div class="tabstrip scopetabs" aria-label="دامنهٔ کارها">
+  <div class="tabs" role="tablist">
+    <button type="button" class="chip" data-tab="all" aria-pressed="true">همه</button>
+    <button type="button" class="chip" data-tab="mine" aria-pressed="false">کارهای من</button>
+    <button type="button" class="chip" data-tab="deleg" aria-pressed="false">واگذارشده</button>
+  </div>
+</div>
+
+<div class="tabstrip">
+  <button type="button" class="navbtn" id="area-prev" aria-label="قبلی">‹</button>
+  <div class="tabs" id="areatabs" role="tablist" aria-label="حوزه‌ها"></div>
+  <button type="button" class="navbtn" id="area-next" aria-label="بعدی">›</button>
+</div>
+<div class="tabstrip" id="substrip" hidden>
+  <button type="button" class="navbtn" id="sub-prev" aria-label="قبلی">‹</button>
+  <div class="tabs subs-strip" id="subtabs" role="tablist" aria-label="زیردسته‌ها"></div>
+  <button type="button" class="navbtn" id="sub-next" aria-label="بعدی">›</button>
+</div>
+
+<div class="filters barrow" aria-label="تنظیمات صفحه">
+  <span class="barlbl">صفحه</span>
+  <span class="zoomctl themectl">
+    <button type="button" class="mini" id="t-light" aria-pressed="false" title="تم روشن">روشن</button>
+    <button type="button" class="mini" id="t-auto" aria-pressed="true" title="مانند دستگاه">خودکار</button>
+    <button type="button" class="mini" id="t-dark" aria-pressed="false" title="تم تیره">تیره</button>
+  </span>
+  <span class="zoomctl">
+    <button type="button" class="mini" id="z-out" aria-label="کوچک‌تر" title="کوچک‌تر">−</button>
+    <button type="button" class="mini" id="z-val" title="بازگشت به اندازه عادی">۱۰۰٪</button>
+    <button type="button" class="mini" id="z-in" aria-label="بزرگ‌تر" title="بزرگ‌تر">+</button>
+  </span>
+  <button type="button" class="chip" id="v-panel" aria-pressed="true" title="پنجرهٔ وضعیت امروز">وضعیت امروز</button>
+  <a class="mini" id="x-setpass" href="?setpass=1" hidden title="برای حساب خودتان رمز بگذارید">ساختن رمز</a>
+  <a class="mini" id="x-logout" href="logout" title="بستن نشست روی این دستگاه">خروج</a>
+  <select id="x-sort" aria-label="ترتیب چیدمان"></select>
+  <button type="button" class="mini" id="x-sortdir" title="برعکس کردن ترتیب">↓</button>
+  <button type="button" class="chip" id="v-board" aria-pressed="true">تخته</button>
+  <button type="button" class="chip" id="v-list" aria-pressed="false">فهرست</button>
+  <button type="button" class="chip" id="v-rows" aria-pressed="false" title="هر کار در یک خط، با ستون‌های قابل‌چیدمان">سطری</button>
+</div>
+
+<div class="filters barrow barrow2" aria-label="نمایش کارها">
+  <span class="barlbl">کارها</span>
+  <input type="text" id="x-search" placeholder="جستجو…" autocomplete="off" aria-label="جستجو">
+  <button type="button" class="mini" id="x-rankclear" title="پاک کردن شماره‌های اولویت روزانه">پاک‌کردن اولویت امروز</button>
+  <button type="button" id="x-export" class="mini" hidden>خروجی اکسل</button>
+  <button type="button" id="x-import" class="mini" hidden title="خواندن همان فایلی که خروجی گرفته‌اید، با تغییراتی که در اکسل داده‌اید">ورودی اکسل</button>
+  <input type="file" id="x-file" accept=".xlsx,.csv" hidden>
+</div>
+
+<main id="list"></main>
+</div>
+<aside class="todaypanel" id="today" aria-label="وضعیت امروز"></aside>
+</div>
+
+<div class="addbar help" id="helppanel" hidden>
+  <div class="panel card">
+
+    <h3 class="sect">این صفحه چیست</h3>
+    <p>فهرست کارهایی که به شما سپرده شده. هر تغییری که بدهید همان لحظه برای بقیه دیده
+    می‌شود و لازم نیست به کسی خبر بدهید. چیزی ذخیره‌کردنی نیست؛ هر تغییر فوری ثبت می‌شود.</p>
+    <p class="owned">شما مالک این دفتر هستید، پس همهٔ کارها و همهٔ تنظیمات را می‌بینید.</p>
+    <p class="membered">فقط کارهای خودتان را می‌بینید، به‌علاوهٔ هر حوزه یا شخصی که
+    دسترسی‌اش به شما داده شده باشد.</p>
+
+    <h3 class="sect">ورود و خروج</h3>
+    <p>لینک شخصی‌تان را یک بار باز می‌کنید و رمز دلخواه خودتان را می‌سازید. از آن به بعد
+    با همان رمز وارد می‌شوید و تا یک سال در همان مرورگر چیزی پرسیده نمی‌شود. روی هر دستگاه
+    تازه — موبایل یا کامپیوتر دیگر — یک بار باید لینک کامل را باز کنید.</p>
+    <p><b>لینک‌تان را به کسی ندهید.</b> هر کس آن را داشته باشد می‌تواند درخواست ساختن رمز
+    بدهد. اگر رمزتان را فراموش کردید یا فکر می‌کنید لینک لو رفته، به احسان بگویید تا
+    بازنشانی کند؛ بعد از آن بار اول رمز تازه می‌سازید.</p>
+    <p>دکمهٔ «خروج» در ردیف «صفحه»، نشست را روی همین دستگاه می‌بندد.</p>
+
+    <h3 class="sect">سه نمای نمایش</h3>
+    <p>در ردیف «صفحه» سه دکمه هست و هر سه یک داده را نشان می‌دهند، فقط به شکل‌های مختلف:</p>
+    <ul class="hlp">
+      <li><b>تخته</b> — هر زیردسته یک ستون، مثل تخته‌های چسبانک. برای دیدن کلیت کار خوب است.
+      پهنای هر ستون را می‌توانید با کشیدن خط جداکننده عوض کنید.</li>
+      <li><b>فهرست</b> — گروه‌بندی‌شده با عنوان حوزه و زیردسته.</li>
+      <li><b>سطری</b> — یک جدول، هر کار دقیقاً یک خط. برای مرتب‌کردن و مقایسه بهترین است؛
+      روی عنوان هر ستون بزنید تا بر اساس آن مرتب شود و بار دوم برعکس.</li>
+    </ul>
+
+    <h3 class="sect">به‌روز کردن کار — کاری که از شما خواسته می‌شود</h3>
+    <ul class="hlp">
+      <li><b>درصد پیشرفت</b> — کشویی کنار هر کار، از ۰ تا ۱۰۰. همین یک عدد مهم‌ترین چیزی است
+      که از شما انتظار می‌رود.</li>
+      <li><b>وضعیت</b> — «شروع نشده»، «در جریان»، یا «منتظر دیگران». اگر کارتان بند کار کس
+      دیگری است، «منتظر دیگران» را بگذارید و در یادداشت بنویسید منتظر چه هستید؛ همین باعث
+      می‌شود پیگیری به گردن شما نماند.</li>
+      <li><b>تیک انجام</b> — مربع کنار نام کار. با زدنش درصد خودش ۱۰۰ می‌شود.</li>
+      <li><b>یادداشت</b> — در نمای سطری ستون «یادداشت» هست. هر توضیحی که لازم است بدانیم
+      همین‌جا بنویسید.</li>
+    </ul>
+    <p class="membered">بقیهٔ فیلدها — عنوان، مهلت، اولویت، حجم، حوزه — به دست احسان تنظیم
+    می‌شوند و برای شما خاکستری‌اند. اگر چیزی در آن‌ها اشتباه است، در یادداشت بنویسید.</p>
+
+    <h3 class="sect">ویرایش درجا</h3>
+    <p>برای هر مقداری که اجازهٔ تغییرش را دارید، لازم نیست دکمهٔ «ویرایش» را بزنید: روی خود
+    مقدار کلیک کنید، عوضش کنید، و <b>Enter</b> بزنید یا جای دیگری کلیک کنید تا ذخیره شود.
+    با <b>Escape</b> لغو می‌شود. در کادر یادداشت، Enter خط تازه می‌سازد و برای ذخیره
+    <b>Ctrl+Enter</b> بزنید یا بیرون کلیک کنید.</p>
+
+    <h3 class="sect">حجم و حجم باقی‌مانده</h3>
+    <p>هر کار یک حجم دارد از «خیلی کم» تا «خیلی زیاد». «مانده» یعنی چقدر از آن حجم هنوز
+    نرفته — یعنی حجم ضربدر درصد نرفته. جمعش بالای صفحه و پای جدول نوشته می‌شود و نشان
+    می‌دهد چقدر کار روی زمین مانده، نه فقط چند تا.</p>
+
+    <h3 class="sect">چیزی را نمی‌بینید؟</h3>
+    <ul class="hlp">
+      <li>ردیف «کارها» را نگاه کنید: اگر روی «باز» است، کارهای تیک‌خورده پیدا نیستند.
+      «همه» را بزنید.</li>
+      <li>کادر جستجو یا فیلترهای اولویت و شخص و پروژه ممکن است چیزی را کنار گذاشته باشند.</li>
+      <li class="membered">اگر کاری که فکر می‌کنید مال شماست دیده نمی‌شود، یعنی نام شما روی
+      آن ثبت نشده. به احسان بگویید.</li>
+    </ul>
+
+    <h3 class="sect owned">اولویت روزانه — مخصوص مالک</h3>
+    <p class="owned">ستون «امروز» و کادر کوچک روی هر کارت، برای چیدن کارهای امروز است.
+    عدد بنویسید، یا چیدمان را روی «اولویت روزانه» بگذارید و کارها را بکشید و رها کنید تا
+    شماره‌ها خودشان بازنویسی شوند. در تخته، کشیدن داخل یک ستون ترتیب را عوض می‌کند و کشیدن
+    به ستون دیگر، زیردسته را. شمارهٔ روزهای قبل خاکستری و بی‌اثر می‌شود و دکمهٔ
+    «پاک‌کردن اولویت امروز» همه را صفر می‌کند.</p>
+
+    <h3 class="sect owned">یادآور و تکرار — مخصوص مالک</h3>
+    <p class="owned">در فرم ویرایش، هر کار می‌تواند چند یادآور داشته باشد؛ هر کدام یا «چند
+    روز قبل از مهلت» یا یک تاریخ معین، و هر کدام با ساعت خودش. تکرار هم می‌تواند هفتگی و
+    ماهانه و فصلی و سالانه باشد، یا «دلخواه»: هر N روز یا هفته یا ماه یا سال، با انتخاب
+    روزهای هفته، و پایان بی‌پایان یا بعد از چند بار یا تا یک تاریخ. کار تکرارشونده که تیک
+    بخورد، نسخهٔ بعدی‌اش خودش ساخته می‌شود.</p>
+
+    <h3 class="sect owned">اشخاص و دسترسی‌ها — مخصوص مالک</h3>
+    <p class="owned">در «⚙ ویرایش دسته‌ها»، بخش اشخاص: تیک «کاربر» کنار هر نام، همان لحظه
+    حساب و لینک شخصی می‌سازد و «کپی لینک» آن را برمی‌دارد. کنارش نوشته می‌شود «رمز دارد» یا
+    «بی‌رمز»، و «بازنشانی رمز» رمز را پاک و نشست‌هایش را می‌بندد. نامی که تیک «کاربر» ندارد
+    فقط یک برچسب روی کار است و خودش جایی را نمی‌بیند. پایین همان پنجره، جدول دسترسی‌ها
+    مشخص می‌کند هر کس چه می‌بیند و به چه کسانی کار می‌دهد.</p>
+
+    <h3 class="sect owned">اکسل — مخصوص مالک</h3>
+    <p class="owned">«خروجی اکسل» همان چیزی را می‌دهد که روی صفحه می‌بینید، با همان چیدمان.
+    «ورودی اکسل» همان فایل را برمی‌گرداند: ستون «شناسه» می‌گوید هر سطر کدام کار است، پس
+    سطر شناسه‌دار به‌روزرسانی می‌شود و سطر بی‌شناسه کار تازه می‌سازد. قبل از اعمال، خلاصه را
+    نشان می‌دهد و منتظر تأیید می‌ماند. ستون شناسه را در اکسل دست نزنید.</p>
+
+    <h3 class="sect owned">پشتیبان — مخصوص مالک</h3>
+    <p class="owned">تمام داده در یک فایل است: <code>data.json</code> در پوشهٔ نصب روی سرور.
+    کپی گرفتن از همان یک فایل، پشتیبان کامل است.</p>
+
+    <div class="row" style="margin-top:10px"><button type="button" class="pclose">بستن</button></div>
+  </div>
+</div>
+
+<div class="addbar" id="dashpanel" hidden>
+  <div class="panel card">
+    <div class="row">
+      <span class="barlbl">چیدمان تخته بر اساس:</span>
+      <button type="button" class="chip" id="bg-sub" aria-pressed="true">زیردسته</button>
+      <button type="button" class="chip" id="bg-stage" aria-pressed="false">مرحله</button>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <label><input type="checkbox" id="opt-done"> نمایش کارهای انجام‌شده</label>
+    </div>
+    <p class="sub" style="margin-top:10px">چیدمان «مرحله» ستون‌های تخته را از مرحلهٔ کار می‌سازد (شروع‌نشده تا انجام‌شده) و کشیدن کارت بین ستون‌ها مرحله را عوض می‌کند.</p>
+    <div class="row" style="margin-top:10px"><button type="button" class="pclose">بستن</button></div>
+  </div>
+</div>
+
+<div class="addbar" id="catspanel" hidden>
+  <div class="panel card">
+    <div id="cats"></div>
+    <form id="addarea" class="row">
+      <div class="grow"><input type="text" id="f-newarea" placeholder="حوزه تازه…" autocomplete="off" aria-label="حوزه تازه"></div>
+      <button type="submit">افزودن حوزه</button>
+    </form>
+    <p class="sub" style="margin-top:10px">حذف یک زیردسته کارهایش را پاک نمی‌کند؛ آن کارها می‌مانند و زیر «بدون زیردسته» نشان داده می‌شوند.</p>
+
+    <h3 class="sect">اشخاص</h3>
+    <div class="subs" id="people"></div>
+    <form id="addperson" class="row" style="margin-top:8px">
+      <div class="grow"><input type="text" id="f-newperson" placeholder="شخص تازه…" autocomplete="off" aria-label="شخص تازه"></div>
+      <button type="submit">افزودن شخص</button>
+    </form>
+    <p class="sub" style="margin-top:10px">نامی که در نوار بالا تایپ کنید خودش به این فهرست اضافه می‌شود.
+    ضربدر، نام را از فهرست برمی‌دارد؛ نام‌هایی که ضربدر ندارند از خود کارها آمده‌اند و با پاک شدن آن کارها خودشان می‌روند.
+    تیک «کاربر» برای هر کس که بزنید، همان لحظه حساب و لینک شخصی می‌گیرد و پنجرهٔ دسترسی‌اش پایین ساخته می‌شود؛
+    با برداشتن تیک، لینکش بی‌اعتبار می‌شود و فقط یک نام می‌ماند.</p>
+
+    <div class="row" style="margin-top:10px"><button type="button" class="pclose">بستن</button></div>
+  </div>
+</div>
+
+<div class="addbar" id="accesspanel" hidden>
+  <div class="panel card">
+    <h3 class="sect">دسترسی‌ها</h3>
+    <p class="sub" style="margin:-4px 0 10px">برای هر نفر مشخص کنید چه چیزی را می‌بیند و به چه کسانی می‌تواند کار بدهد. نقش، مقدارهای پیش‌فرض را می‌گذارد و بعد می‌توانید تک‌تک را دست‌کاری کنید.</p>
+    <div id="acl"></div>
+    <div class="row" style="margin-top:10px"><button type="button" class="pclose">بستن</button></div>
+  </div>
+</div>
+
+<footer class="foot">
+  تاریخ‌ها شمسی‌اند: «۱۴۰۵/۹/۱»، «امروز» یا «فردا» را بنویسید.
+  کار تکرارشونده با تیک خوردن، نسخه دوره بعدش خودش ساخته می‌شود.
+  یادآورها بالای همین صفحه و بعدازظهر روی گوشی می‌آیند.
+</footer>
+
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
